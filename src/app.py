@@ -55,7 +55,7 @@ def users():
 def add_user():
     body = request.get_json(silent=True)
     if body is None:
-        return jsonify({'msg': 'Body needs email and password: email y password.'}), 400
+        return jsonify({'msg': 'Body needs email and password.'}), 400
     if 'email' not in body:
         return jsonify({'msg':'email field is mandatory'}), 400
     if 'password' not in body:
@@ -130,17 +130,20 @@ def get_favorite_charac(user_id):
     fav_chacs_list = []
     for register in fav_chacs:
         character = register.people.serialize()
-        fav_chacs_list.append(character)
+        like_id_character= register.id
+        fav_chacs_list.append([character, {'like_id_register': like_id_character}])
         
     fav_planets_list = []
     for register in fav_planets:
         planets = register.planets.serialize()
-        fav_planets_list.append(planets)
+        like_id_planets = planets.id
+        fav_planets_list.append([planets, {'Like_id_register': like_id_planets}])
         
     fav_starships_list = []
     for register in fav_starships:
         starship = register.starships_list.serialize()
-        fav_starships_list.append(starship)
+        like_id_starships = starship.id
+        fav_starships_list.append([starship, {'Like_id_register': like_id_starships}])
     
     
     return jsonify({f'favorites planets of {user.username}:': fav_planets_list,
@@ -150,13 +153,12 @@ def get_favorite_charac(user_id):
     
     
 @app.route('/favorite/<int:user_id>/people/<int:people_id>', methods=['POST'])
-def add_favorite_planet(user_id, people_id):
-    
+def add_favorite_character(user_id, people_id):
     user = User.query.get(user_id)
     people = Characters.query.get(people_id)
     
     if user is None or people is None:
-        return jsonify({'msg': 'usuario o personaje no encontrado'})
+        return jsonify({'msg': 'usuario o personaje no encontrado'}), 400
     
 
     
@@ -172,15 +174,14 @@ def add_favorite_planet(user_id, people_id):
 
 
 @app.route('/favorite/<int:user_id>/planet/<int:planet_id>', methods=['POST'])
-def add_favorite_character(user_id, planet_id):
+def add_favorite_planet(user_id, planet_id):
+    
+    
     user = User.query.get(user_id)
     planet = Planets.query.get(planet_id)
     
-    
     if user is None or planet is None:
-        print(planet)
-        print(user)
-        return jsonify({'msg': 'usuario o planeta no encontrado'})
+        return jsonify({'msg': 'User or Planet does not exist'}), 400
 
     
     new_fav_planet = FavPlanets(user_id = user_id, planet_id = planet_id)
@@ -189,7 +190,56 @@ def add_favorite_character(user_id, planet_id):
     
     return jsonify({'User:': user.serialize(), 'liked:': planet.serialize()}), 200
 
+
+@app.route('/favorite/<int:user_id>/people/<int:people_id>', methods=['DELETE'])
+def delete_fav_people (user_id, people_id):
     
+    user = User.query.get(user_id)
+    people = Characters.query.get(people_id)
+    
+    user_favorites = user.favorites_characters_list
+    
+    user_favorites_list = []
+    for register in user_favorites:
+        favorite = register.id
+        user_favorites_list.append(favorite)
+    
+    for like in user_favorites_list:
+        if like == people_id:
+
+            register_query = FavCharacters.query.filter_by(id=like).first()
+            db.session.delete(register_query)
+            db.session.commit()
+
+            return jsonify({'msg': 'Liked Character deleten succesfully'}), 200
+        else:
+           return jsonify({'msg': 'El registro a eliminar no exite'}), 400
+    
+@app.route('/favorite/<int:user_id>/planet/<int:planet_id>', methods=['DELETE'])
+def delete_fav_planet (user_id, planet_id):
+    
+    user = User.query.get(user_id)
+    planet = Planets.query.get(planet_id)
+    
+    
+    user_favorites = user.favorites_planets_list
+    
+    user_favorites_list = []
+    for register in user_favorites:
+        favorite = register.id
+        user_favorites_list.append(favorite)
+    
+    for like in user_favorites_list:
+        if like == planet_id:
+
+            register_query = FavPlanets.query.filter_by(id=like).first()
+            db.session.delete(register_query)
+            db.session.commit()
+
+            return jsonify({'msg': 'Liked planet deleted succesfully' }), 200
+        else:
+           return jsonify({'msg': 'That like doesnt exists'}), 400
+
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':

@@ -90,6 +90,7 @@ class FavCharacters(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     character_id: Mapped[int] = mapped_column(ForeignKey('characters.id'))
     user_id: Mapped[int] = mapped_column(ForeignKey('user.id'))
+
     user: Mapped['User'] = relationship(back_populates='favorites_characters_list')
     people: Mapped['Characters'] = relationship(back_populates='favorites')
     
