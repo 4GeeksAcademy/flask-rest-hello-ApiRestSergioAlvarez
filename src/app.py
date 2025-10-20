@@ -50,6 +50,12 @@ def users():
         
     return jsonify({'List of users:': users_serialized })
 
+@app.route('/user/<int:user_id>', methods=['GET'])
+def user(user_id):
+    user = User.query.get(user_id)
+        
+    return jsonify({'User requested:': user.serialize() })
+
 
 @app.route('/register', methods=['POST'])
 def add_user():
@@ -71,7 +77,6 @@ def add_user():
     db.session.commit()
     
     return jsonify({'msg': 'User Registered!', 'User:': new_user.serialize()})
-
 
 
 @app.route('/people', methods=['GET'])
@@ -106,9 +111,6 @@ def find_planet(planet_id):
         
     
     return jsonify({'msg': planet_query.serialize()})
-
-
-
 
 
 @app.route('/users/<int:user_id>/favorites', methods=['GET'])
@@ -195,7 +197,6 @@ def add_favorite_planet(user_id, planet_id):
 def delete_fav_people (user_id, people_id):
     
     user = User.query.get(user_id)
-    people = Characters.query.get(people_id)
     
     user_favorites = user.favorites_characters_list
     
@@ -211,9 +212,9 @@ def delete_fav_people (user_id, people_id):
             db.session.delete(register_query)
             db.session.commit()
 
-            return jsonify({'msg': 'Liked Character deleten succesfully'}), 200
+            return jsonify({f'User: {user.username}' : 'Liked character deleted succesfully'}), 200
         else:
-           return jsonify({'msg': 'El registro a eliminar no exite'}), 400
+           return jsonify({f'User: {user.username}': 'Didnt like that character yet'}), 400
     
 @app.route('/favorite/<int:user_id>/planet/<int:planet_id>', methods=['DELETE'])
 def delete_fav_planet (user_id, planet_id):
@@ -238,7 +239,7 @@ def delete_fav_planet (user_id, planet_id):
 
             return jsonify({'msg': 'Liked planet deleted succesfully' }), 200
         else:
-           return jsonify({'msg': 'That like doesnt exists'}), 400
+           return jsonify({'msg': 'Didnt like that character yet'}), 400
 
 
 # this only runs if `$ python src/app.py` is executed
